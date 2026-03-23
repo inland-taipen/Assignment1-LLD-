@@ -111,7 +111,7 @@ class Dice {
 
 class Board {
   - size: int
-  - snakesAndLadders: Map~Integer, BoardEntity~
+  - snakesAndLadders: Map
   + applyTransitions(position: int): int
 }
 
@@ -120,7 +120,7 @@ class Player {
   - position: int
 }
 
-class GameStatus <<enumeration>> {
+class GameStatus {
   NOT_STARTED
   RUNNING
   FINISHED
