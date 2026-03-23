@@ -5,16 +5,17 @@ import java.util.List;
 
 public class Game {
     private final Board board;
-    private final Die die;
+    private final Dice dice;
     private final List<Player> players;
     private final int targetWinnerCount; // game ends when at least this many winners exist
+    private GameStatus status;
 
-    public Game(Board board, Die die, int playersCount, int targetWinnerCount) {
+    public Game(Board board, Dice dice, int playersCount, int targetWinnerCount) {
         if (board == null) {
             throw new IllegalArgumentException("board cannot be null");
         }
-        if (die == null) {
-            throw new IllegalArgumentException("die cannot be null");
+        if (dice == null) {
+            throw new IllegalArgumentException("dice cannot be null");
         }
         if (playersCount < 2) {
             throw new IllegalArgumentException("playersCount must be >= 2");
@@ -24,20 +25,22 @@ public class Game {
         }
 
         this.board = board;
-        this.die = die;
+        this.dice = dice;
         this.players = new ArrayList<>();
         for (int i = 1; i <= playersCount; i++) {
-            players.add(new Player(i));
+            players.add(new Player("P" + i));
         }
         this.targetWinnerCount = targetWinnerCount;
+        this.status = GameStatus.NOT_STARTED;
     }
 
     public void play() {
+        status = GameStatus.RUNNING;
+
         System.out.println("Board size: " + board.getSize() + "x" + board.getSize());
         System.out.println("Board last cell: " + board.getMaxCell());
         System.out.println();
-        System.out.println("Snakes (head -> tail): " + board.getSnakes());
-        System.out.println("Ladders (start -> end): " + board.getLadders());
+        System.out.println("Snakes & Ladders (start -> end): " + board.getSnakesAndLadders());
         System.out.println();
 
         int winners = 0;
@@ -47,14 +50,14 @@ public class Game {
                     continue;
                 }
 
-                int roll = die.roll(); // 1..6
+                int roll = dice.roll(); // 1..6
                 int from = p.getPosition();
                 int proposed = from + roll;
 
                 // Spec note: don't move beyond 100.
                 int moveLimit = Math.min(board.getMaxCell(), 100);
                 if (proposed > moveLimit) {
-                    System.out.println("Player " + p.getId() + " rolled " + roll + " (stay at " + from + ")");
+                    System.out.println("Player " + p.getName() + " rolled " + roll + " (stay at " + from + ")");
                     continue;
                 }
 
@@ -65,14 +68,14 @@ public class Game {
                         ? (" (after snake/ladder: " + proposed + " -> " + landing + ")")
                         : "";
                 System.out.println(
-                        "Player " + p.getId() + " rolled " + roll +
+                        "Player " + p.getName() + " rolled " + roll +
                                 " : " + from + " -> " + proposed + transitioned
                 );
 
                 if (landing == board.getMaxCell()) {
                     p.markWon();
                     winners++;
-                    System.out.println("Player " + p.getId() + " reached the last cell. Winners: " + winners);
+                    System.out.println("Player " + p.getName() + " reached the last cell. Winners: " + winners);
                     if (winners >= targetWinnerCount) {
                         break;
                     }
@@ -80,11 +83,12 @@ public class Game {
             }
         }
 
+        status = GameStatus.FINISHED;
         System.out.println();
         System.out.println("Game finished. Winners:");
         for (Player p : players) {
             if (p.hasWon()) {
-                System.out.println("- Player " + p.getId());
+                System.out.println("- Player " + p.getName());
             }
         }
     }

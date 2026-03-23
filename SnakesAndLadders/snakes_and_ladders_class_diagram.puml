@@ -1,0 +1,67 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Core Classes" {
+  class Game {
+    - board: Board
+    - players: List<Player>
+    - dice: Dice
+    - status: GameStatus
+    + play(): void
+  }
+
+  class Dice {
+    - minValue: int
+    - maxValue: int
+    + roll(): int
+  }
+
+  class Board {
+    - size: int
+    - snakesAndLadders: Map<Integer, BoardEntity>
+    + applyTransitions(position: int): int
+  }
+}
+
+package "Enums" {
+  enum GameStatus {
+    NOT_STARTED
+    RUNNING
+    FINISHED
+  }
+}
+
+package "Data Classes" {
+  class Player {
+    - name: String
+    - position: int
+  }
+
+  abstract class BoardEntity {
+    - start: int
+    - end: int
+  }
+}
+
+package "Inheritance Hierarchy" {
+  class Snake {
+  }
+
+  class Ladder {
+  }
+}
+
+Game *-- Board
+Game *-- Player
+Dice --> Game : manages
+Game --> GameStatus : status
+
+Board o-- "0..*" BoardEntity : stores
+
+Snake --|> BoardEntity : start > end
+Ladder --|> BoardEntity : start < end
+
+@enduml
+

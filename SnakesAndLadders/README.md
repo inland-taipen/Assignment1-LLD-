@@ -18,77 +18,139 @@ This folder contains a small Snakes & Ladders (LLD-style) application that match
 - Game ends after at least **2** players win (configurable in `Game`).
 - If a dice move would go beyond the board end (and also the assignment’s `100` cap), the piece does not move.
 
-### UML Class Diagram (PlantUML)
+### UML Class Diagram (PlantUML) - matches your picture
 
 ```plantuml
 @startuml
 skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
 
-enum DifficultyLevel {
-  EASY
-  HARD
+package "Core Classes" {
+  class Game {
+    - board: Board
+    - players: List<Player>
+    - dice: Dice
+    - status: GameStatus
+    + play(): void
+  }
+
+  class Dice {
+    - minValue: int
+    - maxValue: int
+    + roll(): int
+  }
+
+  class Board {
+    - size: int
+    - snakesAndLadders: Map<Integer, BoardEntity>
+    + applyTransitions(position: int): int
+  }
 }
 
-interface Die {
-  +roll(): int
+package "Enums" {
+  enum GameStatus {
+    NOT_STARTED
+    RUNNING
+    FINISHED
+  }
 }
 
-class StandardDie {
-  - rng: Random
-  +StandardDie(rng: Random)
-  +roll(): int
+package "Data Classes" {
+  class Player {
+    - name: String
+    - position: int
+  }
+
+  abstract class BoardEntity {
+    - start: int
+    - end: int
+  }
 }
 
-class Player {
-  - id: int
-  - position: int
-  - won: boolean
-  +getId(): int
-  +getPosition(): int
-  +setPosition(position: int): void
-  +hasWon(): boolean
-  +markWon(): void
+package "Inheritance Hierarchy" {
+  class Snake {
+  }
+
+  class Ladder {
+  }
 }
 
-class Board {
-  - size: int
-  - maxCell: int
-  - snakeHeadsToTails: Map<Integer, Integer>
-  - ladderStartsToEnds: Map<Integer, Integer>
-  +getMaxCell(): int
-  +applyTransitions(position: int): int
-  +getSnakes(): Map<Integer, Integer>
-  +getLadders(): Map<Integer, Integer>
-}
-
-class BoardGenerator {
-  +generate(n: int, difficulty: DifficultyLevel, rng: Random): Board
-}
-
-class Game {
-  - board: Board
-  - die: Die
-  - players: List<Player>
-  - targetWinnerCount: int
-  +Game(board: Board, die: Die, playersCount: int, targetWinnerCount: int)
-  +play(): void
-}
-
-StandardDie ..|> Die
-Game o-- Board
-Game o-- Die
+Game *-- Board
 Game *-- Player
-BoardGenerator --> Board : creates
-Board o-- "0..*" Map : snakes/ladders
+Dice --> Game : manages
+Game --> GameStatus : status
+
+Board o-- "0..*" BoardEntity : stores
+
+Snake --|> BoardEntity : start > end
+Ladder --|> BoardEntity : start < end
 
 @enduml
 ```
 
+### Mermaid Class Diagram (renders on GitHub)
+
+```mermaid
+classDiagram
+direction TB
+
+class Game {
+  - board: Board
+  - players: List<Player>
+  - dice: Dice
+  - status: GameStatus
+  + play(): void
+}
+
+class Dice {
+  - minValue: int
+  - maxValue: int
+  + roll(): int
+}
+
+class Board {
+  - size: int
+  - snakesAndLadders: Map~Integer, BoardEntity~
+  + applyTransitions(position: int): int
+}
+
+class Player {
+  - name: String
+  - position: int
+}
+
+class GameStatus <<enumeration>> {
+  NOT_STARTED
+  RUNNING
+  FINISHED
+}
+
+class BoardEntity {
+  - start: int
+  - end: int
+}
+
+class Snake
+class Ladder
+
+Game *-- Board
+Game *-- Player
+Dice --> Game : manages
+Game --> GameStatus : status
+
+Board o-- "0..*" BoardEntity : stores
+
+BoardEntity <|-- Snake : start > end
+BoardEntity <|-- Ladder : start < end
+```
+
 ### Relationship Meaning (Quick Notes)
-- `Game` controls turn order and the win condition.
-- `Board` owns the snake/ladder mappings and applies transitions after each move.
-- `BoardGenerator` randomly generates snakes/ladders while preventing cycles (DAG).
-- `StandardDie` implements `Die`.
+- `Game` controls turn order, win condition, and `GameStatus`.
+- `Dice` provides the 1..6 random roll for each turn.
+- `Board` owns `snakesAndLadders` and applies the transition to the landing cell.
+- `BoardEntity` is the base type for both `Snake` and `Ladder` (with different start/end constraints).
+- `BoardGenerator` randomly generates snakes and ladders while preventing cycles (DAG).
 
 ### Demo / Run
 

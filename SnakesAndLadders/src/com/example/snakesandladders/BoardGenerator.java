@@ -1,10 +1,8 @@
 package com.example.snakesandladders;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public class BoardGenerator {
     // To match the assignment statement: pieces should not move beyond 100.
@@ -39,10 +37,8 @@ public class BoardGenerator {
         // Sources are snake heads and ladder starts (disjoint).
         Map<Integer, Integer> edges = new HashMap<>();
 
-        Map<Integer, Integer> snakes = new HashMap<>();   // head -> tail
-        Map<Integer, Integer> ladders = new HashMap<>();  // start -> end
-        Set<Integer> snakeHeads = new HashSet<>();
-        Set<Integer> ladderStarts = new HashSet<>();
+        // Board entities keyed by their start cell (head or ladder-start).
+        Map<Integer, BoardEntity> snakesAndLadders = new HashMap<>();
 
         // Generate snakes first (sources = snake heads)
         int snakeCount = 0;
@@ -57,8 +53,8 @@ public class BoardGenerator {
 
             // Avoid 1 and maxCell as snake-heads so the last cell can be a win-cell.
             int head = randomInt(rng, 2, maxCell - 1);
-            if (snakeHeads.contains(head)) {
-                continue;
+            if (edges.containsKey(head)) {
+                continue; // also prevents collisions with previously created ladders
             }
 
             int tail = pickSnakeTail(head, difficulty, maxCell, rng);
@@ -71,8 +67,7 @@ public class BoardGenerator {
                 continue;
             }
 
-            snakeHeads.add(head);
-            snakes.put(head, tail);
+            snakesAndLadders.put(head, new Snake(head, tail));
             edges.put(head, tail);
             snakeCount++;
         }
@@ -87,10 +82,6 @@ public class BoardGenerator {
 
             int start = randomInt(rng, 1, maxCell - 1);
             if (edges.containsKey(start)) {
-                // start is a snake head => would mean multiple outgoing transitions.
-                continue;
-            }
-            if (ladderStarts.contains(start)) {
                 continue;
             }
 
@@ -103,13 +94,12 @@ public class BoardGenerator {
                 continue;
             }
 
-            ladderStarts.add(start);
-            ladders.put(start, end);
+            snakesAndLadders.put(start, new Ladder(start, end));
             edges.put(start, end);
             ladderCount++;
         }
 
-        return new Board(n, snakes, ladders);
+        return new Board(n, snakesAndLadders);
     }
 
     private static boolean createsCycle(int source, int destination, Map<Integer, Integer> edges) {
@@ -117,21 +107,17 @@ public class BoardGenerator {
         int current = destination;
 
         int safety = 0;
-        while (true) {
+        while (edges.containsKey(current)) {
             if (current == source) {
                 return true;
             }
-            Integer next = edges.get(current);
-            if (next == null) {
-                return false;
-            }
-            current = next;
+            current = edges.get(current);
             safety++;
             if (safety > edges.size() + 5) {
-                // Should never happen if edges are well-formed (outgoing edges only from unique sources).
                 return false;
             }
         }
+        return false;
     }
 
     private static int pickSnakeTail(int head, DifficultyLevel difficulty, int maxCell, Random rng) {

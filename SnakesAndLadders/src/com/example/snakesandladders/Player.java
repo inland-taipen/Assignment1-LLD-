@@ -1,21 +1,21 @@
 package com.example.snakesandladders;
 
 public class Player {
-    private final int id;
+    private final String name;
     private int position; // 0 means "outside the board"
     private boolean won;
 
-    public Player(int id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("player id must be positive");
+    public Player(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("player name cannot be blank");
         }
-        this.id = id;
+        this.name = name;
         this.position = 0;
         this.won = false;
     }
 
-    public int getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
     public int getPosition() {
